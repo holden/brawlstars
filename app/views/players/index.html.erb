@@ -1,0 +1,70 @@
+<div class="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-full mx-auto">
+    <div class="bg-white shadow-lg rounded-lg p-6">
+      <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Brawl Stars Players</h1>
+        <div class="flex gap-4">
+          <%= link_to "Battle Log", battle_log_path, class: "text-indigo-600 hover:text-indigo-800" %>
+          <%= link_to "Brawlers", brawlers_path, class: "text-indigo-600 hover:text-indigo-800" %>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <%= form_tag players_path, method: :get, class: "flex items-center gap-2" do %>
+          <%= hidden_field_tag :sort, params[:sort] if params[:sort].present? %>
+          <%= select_tag :country,
+              options_for_select([['All Countries', '']] + @countries.map { |c| ["#{c.emoji_flag} #{c.name}", c.alpha2] },
+                               params[:country]),
+              class: "rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+              onchange: 'this.form.submit()' %>
+        <% end %>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="border-collapse table-auto w-full text-sm">
+          <thead>
+            <tr>
+              <%= render 'sort_header', title: 'Country', field: 'country', current_sort: params[:sort], direction: params[:direction], country: params[:country] %>
+              <th class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left">Player</th>
+              <th class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left">Club</th>
+              <%= render 'sort_header', title: 'Rank', field: 'rank', current_sort: params[:sort], direction: params[:direction], country: params[:country] %>
+              <%= render 'sort_header', title: 'Trophies', field: 'trophies', current_sort: params[:sort], direction: params[:direction], country: params[:country] %>
+            </tr>
+          </thead>
+          <tbody class="bg-white">
+            <% @players.each do |player| %>
+              <tr>
+                <td class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400">
+                  <% if player.country_flag %>
+                    <span class="text-lg" title="<%= player.country_name %>">
+                      <%= player.country_flag %>
+                    </span>
+                  <% end %>
+                </td>
+                <td class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400">
+                  <%= link_to player_path(player), class: "text-indigo-600 hover:text-indigo-900" do %>
+                    <div class="font-medium text-slate-900"><%= player.name %></div>
+                    <div class="text-slate-500"><%= player.tag %></div>
+                  <% end %>
+                </td>
+                <td class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400">
+                  <%= player.club_name %>
+                </td>
+                <td class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400">
+                  <%= player.current_rank %>
+                </td>
+                <td class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400">
+                  <%= number_with_delimiter(player.current_trophies) %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mt-6">
+        <%== pagy_nav(@pagy) if @pagy %>
+      </div>
+    </div>
+  </div>
+</div> 

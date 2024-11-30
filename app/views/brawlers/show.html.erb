@@ -1,0 +1,77 @@
+<div class="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-4xl mx-auto">
+    <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+      <% if @brawler.present? %>
+        <div class="p-6">
+          <div class="flex justify-between items-start mb-6">
+            <div class="flex items-start gap-6">
+              <div class="w-32 h-32 flex-shrink-0">
+                <%= image_tag "https://cdn.brawlify.com/brawlers/borderless/#{@brawler.brawl_stars_id}.png", 
+                    class: "w-full h-full object-contain",
+                    alt: @brawler.name %>
+              </div>
+              <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2"><%= @brawler.name %></h1>
+                <span class="px-3 py-1 text-sm font-medium rounded-full <%= rarity_style(@brawler.rarity) %>">
+                  <%= @brawler.rarity&.titleize %>
+                </span>
+              </div>
+            </div>
+            <%= link_to "Back to Brawlers", brawlers_path, 
+                class: "text-indigo-600 hover:text-indigo-800" %>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+              <div class="bg-gray-50 rounded-lg p-4">
+                <h3 class="font-semibold text-gray-900 mb-3">Basic Info</h3>
+                <div class="space-y-2">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Class:</span>
+                    <span class="font-medium"><%= @brawler.brawler_class %></span>
+                  </div>
+                  <% if @brawler_details %>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600">Description:</span>
+                      <span class="font-medium"><%= @brawler_details['description'] %></span>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+
+              <% if @brawler_details&.dig('gadgets')&.present? %>
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <h3 class="font-semibold text-gray-900 mb-3">Gadgets</h3>
+                  <div class="space-y-3">
+                    <% @brawler_details['gadgets'].each do |gadget| %>
+                      <div class="bg-white rounded p-3">
+                        <div class="font-medium text-gray-900 mb-1"><%= gadget['name'] %></div>
+                        <p class="text-sm text-gray-600"><%= gadget['description'] %></p>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="space-y-4">
+              <% if @brawler_details&.dig('starPowers')&.present? %>
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <h3 class="font-semibold text-gray-900 mb-3">Star Powers</h3>
+                  <div class="space-y-3">
+                    <% @brawler_details['starPowers'].each do |star_power| %>
+                      <div class="bg-white rounded p-3">
+                        <div class="font-medium text-gray-900 mb-1"><%= star_power['name'] %></div>
+                        <p class="text-sm text-gray-600"><%= star_power['description'] %></p>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div> 

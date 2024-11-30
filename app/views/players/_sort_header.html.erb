@@ -1,0 +1,15 @@
+<th class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left">
+  <%= link_to players_path(sort: field, direction: next_sort_direction(field), country: country),
+      class: "group inline-flex items-center space-x-1 hover:text-slate-900" do %>
+    <span><%= title %></span>
+    <span class="invisible group-hover:visible">
+      <% if current_sort == field && params[:direction] == 'desc' %>
+        ↑
+      <% elsif current_sort == field %>
+        ↓
+      <% else %>
+        ↕
+      <% end %>
+    </span>
+  <% end %>
+</th> 
