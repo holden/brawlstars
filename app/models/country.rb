@@ -3,11 +3,13 @@ class Country
   
   attr_accessor :name, :alpha2, :emoji_flag
 
+  PRIORITY_COUNTRIES = %w[ZA YE XK VN] # Add any priority countries here
+
   class << self
     def all
       ISO3166::Country.all.map do |country|
         new(
-          name: country.common_name,
+          name: country.iso_short_name,
           alpha2: country.alpha2,
           emoji_flag: country.emoji_flag
         )
@@ -19,17 +21,10 @@ class Country
       return nil unless country
 
       new(
-        name: country.common_name,
+        name: country.iso_short_name,
         alpha2: country.alpha2,
         emoji_flag: country.emoji_flag
       )
-    end
-
-    def find_by(attributes)
-      code = attributes[:code]
-      return nil unless code
-
-      find(code)
     end
 
     def codes
@@ -41,8 +36,11 @@ class Country
     end
 
     def fetch_all_top_players
-      codes.each do |code|
-        FetchTopPlayersJob.perform_later(code)
+      # Process countries from A to Z
+      codes.sort.each_with_index do |code, index|
+        Rails.logger.info "Scheduling fetch for country #{code} (#{index + 1}/#{codes.length})"
+        # Add a 2-second delay between each country to avoid rate limits
+        FetchTopPlayersJob.set(wait: index * 2.seconds).perform_later(code)
       end
     end
   end
@@ -52,6 +50,7 @@ class Country
   end
 
   def fetch_top_players
+    Rails.logger.info "Fetching top players for #{name} (#{alpha2})"
     FetchTopPlayersJob.perform_later(alpha2)
   end
 end 

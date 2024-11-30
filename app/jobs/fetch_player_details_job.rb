@@ -4,22 +4,53 @@ class FetchPlayerDetailsJob < ApplicationJob
   def perform(player_tag)
     return unless should_update?(player_tag)
 
+    Rails.logger.info "Starting player details fetch for #{player_tag}"
     response = BrawlStarsService.new.get_player(player_tag)
     return unless response.success?
 
     player_data = response.parsed_response
+    Rails.logger.info "Raw API response: #{player_data.inspect}"
     Rails.logger.info "Received player data for #{player_tag}: #{player_data.slice('name', 'tag').inspect}"
     Rails.logger.info "Brawlers count in response: #{player_data['brawlers']&.length || 0}"
     
     Player.transaction do
       player = Player.find_by!(tag: player_tag)
+      
       update_player_details(player, player_data)
       
       if player_data['brawlers'].present?
-        Rails.logger.info "Found #{player_data['brawlers'].length} brawlers in API response"
-        update_player_brawlers(player, player_data['brawlers'])
+        Rails.logger.info "First brawler data sample: #{player_data['brawlers'].first.inspect}"
+        player_data['brawlers'].each do |brawler_data|
+          Rails.logger.info "Processing brawler ID: #{brawler_data['id']}"
+          player_brawler = player.player_brawlers.find_or_initialize_by(
+            brawler_id: brawler_data['id']
+          )
+          
+          if player_brawler.new_record?
+            Rails.logger.info "Creating new player_brawler for brawler_id: #{brawler_data['id']}"
+          else
+            Rails.logger.info "Updating existing player_brawler for brawler_id: #{brawler_data['id']}"
+          end
+
+          begin
+            player_brawler.update!(
+              power: brawler_data['power'],
+              rank: brawler_data['rank'],
+              trophies: brawler_data['trophies'],
+              highest_trophies: brawler_data['highestTrophies'],
+              gears: brawler_data['gears'] || [],
+              star_powers: brawler_data['starPowers'] || [],
+              gadgets: brawler_data['gadgets'] || []
+            )
+            Rails.logger.info "Successfully saved player_brawler #{player_brawler.id} for brawler_id: #{brawler_data['id']}"
+          rescue => e
+            Rails.logger.error "Failed to save player_brawler: #{e.message}"
+            Rails.logger.error e.backtrace.join("\n")
+            raise e
+          end
+        end
       else
-        Rails.logger.warn "No brawlers data found in API response for player #{player_tag}"
+        Rails.logger.error "No brawlers array in player data for #{player_tag}"
       end
     end
   rescue => e
@@ -31,17 +62,12 @@ class FetchPlayerDetailsJob < ApplicationJob
   private
 
   def should_update?(player_tag)
-    player = Player.find_by(tag: player_tag)
-    return true unless player # New player
-
-    # If the record was just created (within last minute), always update
-    return true if player.created_at > 1.minute.ago
-    
-    # Otherwise, only update if it's been more than the configured interval
-    player.updated_at < PLAYER_UPDATE_INTERVAL.ago
+    # Always update when called since we only call this when trophies change
+    true
   end
 
   def update_player_details(player, data)
+    Rails.logger.info "Updating details for player #{player.name} (#{player.tag})"
     player.update!(
       name: data['name'],
       club_name: data.dig('club', 'name'),
@@ -63,15 +89,34 @@ class FetchPlayerDetailsJob < ApplicationJob
   def update_player_brawlers(player, brawlers_data)
     return unless brawlers_data.is_a?(Array)
 
-    Rails.logger.info "Received #{brawlers_data.length} brawlers for player #{player.name}"
-    Rails.logger.debug "Brawlers data sample: #{brawlers_data.first.inspect}" if brawlers_data.any?
+    Rails.logger.info "Starting brawler updates for player #{player.name} (#{brawlers_data.length} brawlers)"
+    
+    brawlers_data.each do |brawler_data|
+      begin
+        player_brawler = player.player_brawlers.find_or_initialize_by(
+          brawler_id: brawler_data['id']
+        )
 
-    begin
-      player.update_brawlers_from_api(brawlers_data)
-    rescue => e
-      Rails.logger.error "Error updating player brawlers: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
-      raise e # Re-raise to trigger job retry
+        Rails.logger.info "Processing brawler #{brawler_data['id']} for player #{player.name} (#{player_brawler.new_record? ? 'new' : 'existing'})"
+
+        player_brawler.update!(
+          power: brawler_data['power'],
+          rank: brawler_data['rank'],
+          trophies: brawler_data['trophies'],
+          highest_trophies: brawler_data['highestTrophies'],
+          gears: brawler_data['gears'] || [],
+          star_powers: brawler_data['starPowers'] || [],
+          gadgets: brawler_data['gadgets'] || []
+        )
+
+        Rails.logger.info "Successfully updated brawler #{brawler_data['id']} for player #{player.name}"
+      rescue => e
+        Rails.logger.error "Error updating brawler #{brawler_data['id']} for player #{player.name}: #{e.message}"
+        Rails.logger.error e.backtrace.join("\n")
+        raise e
+      end
     end
+
+    Rails.logger.info "Completed all brawler updates for player #{player.name}"
   end
 end 

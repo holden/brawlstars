@@ -1,0 +1,46 @@
+<%= turbo_stream.replace "player_data" do %>
+  <%= turbo_frame_tag "player_data" do %>
+    <!-- Player Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <!-- Basic Info -->
+      <div class="bg-gray-50 rounded-lg p-4">
+        <h2 class="font-semibold text-gray-900 mb-3">Basic Info</h2>
+        <div class="space-y-2">
+          <div class="flex justify-between">
+            <span class="text-gray-600">Experience Level:</span>
+            <span class="font-medium"><%= @player.reload.exp_level %></span>
+          </div>
+          <!-- ... rest of the basic info ... -->
+        </div>
+      </div>
+
+      <!-- Victory Stats -->
+      <div class="bg-gray-50 rounded-lg p-4">
+        <!-- ... victory stats ... -->
+      </div>
+
+      <!-- Other Stats -->
+      <div class="bg-gray-50 rounded-lg p-4">
+        <!-- ... other stats ... -->
+      </div>
+    </div>
+
+    <!-- Brawlers Table -->
+    <%= render 'brawlers_table', player_brawlers: @player.player_brawlers.includes(:brawler).order(trophies: :desc) %>
+  <% end %>
+<% end %>
+
+<%= turbo_stream.update "flash" do %>
+  <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+      </div>
+      <div class="ml-3">
+        <p class="text-sm text-green-700">Player data has been updated</p>
+      </div>
+    </div>
+  </div>
+<% end %> 

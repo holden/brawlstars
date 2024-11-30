@@ -35,6 +35,48 @@ class PlayersController < ApplicationController
     redirect_to players_path
   end
 
+  def sync
+    @player = Player.find(params[:id])
+    FetchPlayerDetailsJob.perform_later(@player.tag)
+    
+    respond_to do |format|
+      format.html { redirect_to @player, notice: 'Player sync has been queued' }
+      format.turbo_stream do
+        # Wait a moment for the job to complete
+        sleep 2
+        # Reload the player to get fresh data
+        @player.reload
+        render turbo_stream: turbo_stream.replace(
+          "player_data", 
+          partial: "players/player_data", 
+          locals: { player: @player }
+        )
+      end
+    end
+  end
+
+  def sync_country
+    country_code = params[:country]
+    Rails.logger.info "Attempting to sync country: #{country_code}"
+    
+    if country_code.present?
+      country = Country.find(country_code)
+      if country
+        Rails.logger.info "Found country: #{country.name}, starting sync"
+        FetchTopPlayersJob.perform_later(country_code)  # Direct job call instead of using fetch_top_players
+        flash[:notice] = "Sync started for #{country.name}"
+      else
+        Rails.logger.error "Country not found for code: #{country_code}"
+        flash[:error] = "Country not found"
+      end
+    else
+      Rails.logger.error "No country code provided"
+      flash[:error] = "No country selected"
+    end
+    
+    redirect_to players_path(country: country_code)
+  end
+
   private
 
   def sort_direction

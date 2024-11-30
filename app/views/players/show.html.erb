@@ -10,90 +10,34 @@
                 alt: "Player Icon" %>
           <% end %>
           <div>
-            <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <h1 class="text-3xl font-bold text-gray-900">
               <%= @player.name %>
-              <% if @player.country_flag %>
-                <span class="text-2xl" title="<%= @player.country_name %>">
-                  <%= @player.country_flag %>
-                </span>
-              <% end %>
             </h1>
             <div class="text-gray-500"><%= @player.tag %></div>
           </div>
         </div>
-        <%= link_to "Back to Players", players_path, class: "text-indigo-600 hover:text-indigo-800" %>
-      </div>
-
-      <!-- Player Stats -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <!-- Basic Info -->
-        <div class="bg-gray-50 rounded-lg p-4">
-          <h2 class="font-semibold text-gray-900 mb-3">Basic Info</h2>
-          <div class="space-y-2">
-            <div class="flex justify-between">
-              <span class="text-gray-600">Experience Level:</span>
-              <span class="font-medium"><%= @player.exp_level %></span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600">Experience Points:</span>
-              <span class="font-medium"><%= number_with_delimiter(@player.exp_points) %></span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600">Current Trophies:</span>
-              <span class="font-medium"><%= number_with_delimiter(@player.current_trophies) %></span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600">Highest Trophies:</span>
-              <span class="font-medium"><%= number_with_delimiter(@player.highest_trophies) %></span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Victory Stats -->
-        <div class="bg-gray-50 rounded-lg p-4">
-          <h2 class="font-semibold text-gray-900 mb-3">Victory Stats</h2>
-          <div class="space-y-2">
-            <div class="flex justify-between">
-              <span class="text-gray-600">3v3 Victories:</span>
-              <span class="font-medium"><%= number_with_delimiter(@player.victories_3vs3) %></span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600">Solo Victories:</span>
-              <span class="font-medium"><%= number_with_delimiter(@player.solo_victories) %></span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600">Duo Victories:</span>
-              <span class="font-medium"><%= number_with_delimiter(@player.duo_victories) %></span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Other Stats -->
-        <div class="bg-gray-50 rounded-lg p-4">
-          <h2 class="font-semibold text-gray-900 mb-3">Other Stats</h2>
-          <div class="space-y-2">
-            <div class="flex justify-between">
-              <span class="text-gray-600">Club:</span>
-              <span class="font-medium"><%= @player.club_name || 'No Club' %></span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600">Best Robo Rumble Time:</span>
-              <span class="font-medium"><%= @player.best_robo_rumble_time || 'N/A' %></span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600">Best Time as Big Brawler:</span>
-              <span class="font-medium"><%= @player.best_time_as_big_brawler || 'N/A' %></span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-600">Championship Qualified:</span>
-              <span class="font-medium"><%= @player.is_qualified_from_championship ? 'Yes' : 'No' %></span>
-            </div>
-          </div>
+        <div class="flex items-center gap-4">
+          <%= button_to "Sync Player Data", 
+              sync_player_path(@player),
+              method: :post,
+              class: "px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors",
+              data: { turbo_frame: "player_data" } %>
+          <%= link_to "Back to Players", 
+              players_path,
+              class: "text-indigo-600 hover:text-indigo-800" %>
         </div>
       </div>
 
-      <!-- Brawlers Table -->
-      <%= render 'brawlers_table', player_brawlers: @player.player_brawlers.includes(:brawler).order(trophies: :desc) %>
+      <!-- Flash messages -->
+      <div id="flash">
+        <% if notice %>
+          <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
+            <%= notice %>
+          </div>
+        <% end %>
+      </div>
+
+      <%= render "player_data", player: @player %>
     </div>
   </div>
 </div> 

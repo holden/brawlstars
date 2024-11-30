@@ -18,7 +18,14 @@ Rails.application.routes.draw do
     end
   end
   resource :battle_log, only: [:show]
-  resources :players, only: [:index, :show]
+  resources :players, only: [:index, :show] do
+    member do
+      post :sync
+    end
+    collection do
+      post :sync_country
+    end
+  end
 
   root "battle_logs#show"
 

@@ -13,31 +13,27 @@ class Player < ApplicationRecord
   def self.create_or_update_from_api(data)
     player = find_or_initialize_by(tag: data['tag'])
     
-    # Always update name and club if provided
+    # Always update rank and country
+    player.current_rank = data['rank']
+    player.country_id = data['country_id']
+    
+    # Only update trophies if the value is valid (greater than 1)
+    if data['trophies'].to_i > 1
+      player.current_trophies = data['trophies']
+    elsif player.new_record?
+      # For new records, set to nil if invalid
+      player.current_trophies = nil
+    end
+    # For existing records with invalid trophies, keep the previous value
+    
+    # Only update other fields if they're provided
     player.name = data['name'] if data['name'].present?
     player.club_name = data.dig('club', 'name') if data.dig('club', 'name').present?
     player.club_tag = data.dig('club', 'tag') if data.dig('club', 'tag').present?
     
-    # Update current stats
-    player.current_rank = data['rank']
-    player.current_trophies = data['trophies'] if data['trophies'].to_i > 1
-    player.country_id = data['country_id']
-    
-    # Update additional stats if provided
-    player.icon_id = data['icon']['id'] if data['icon'].present?
-    player.highest_trophies = data['highestTrophies'] if data['highestTrophies'].present?
-    player.exp_level = data['expLevel'] if data['expLevel'].present?
-    player.exp_points = data['expPoints'] if data['expPoints'].present?
-    player.is_qualified_from_championship = data['isQualifiedFromChampionship'] if data['isQualifiedFromChampionship'].present?
-    player.victories_3vs3 = data['3vs3Victories'] if data['3vs3Victories'].present?
-    player.solo_victories = data['soloVictories'] if data['soloVictories'].present?
-    player.duo_victories = data['duoVictories'] if data['duoVictories'].present?
-    player.best_robo_rumble_time = data['bestRoboRumbleTime'] if data['bestRoboRumbleTime'].present?
-    player.best_time_as_big_brawler = data['bestTimeAsBigBrawler'] if data['bestTimeAsBigBrawler'].present?
-    
     player.save!
     
-    Rails.logger.info "Updated player #{player.name} with trophies: #{player.current_trophies} and rank: #{player.current_rank}"
+    Rails.logger.info "Updated player #{player.name} (#{player.tag}): rank=#{player.current_rank}, trophies=#{player.current_trophies}"
     
     player
   end
