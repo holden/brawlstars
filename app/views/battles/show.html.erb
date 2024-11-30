@@ -1,0 +1,61 @@
+<div class="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto">
+    <div class="bg-white shadow-lg rounded-lg p-6">
+      <!-- Battle Header -->
+      <div class="flex justify-between items-center mb-8">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900"><%= @battle.mode.titleize %></h1>
+          <div class="text-gray-500">
+            <%= @battle.map %> • <%= time_ago_in_words(@battle.battle_time) %> ago
+          </div>
+        </div>
+        <%= link_to "Back to Battles", battles_path, class: "text-indigo-600 hover:text-indigo-800" %>
+      </div>
+
+      <!-- Teams -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <% @battle.teams.order(:rank).each do |team| %>
+          <div class="bg-gray-50 rounded-lg p-4">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="font-semibold text-gray-900">
+                Team <%= team.rank %>
+                <span class="ml-2 text-sm font-normal <%= team.result == 'victory' ? 'text-green-600' : 'text-red-600' %>">
+                  <%= team.result&.titleize %>
+                </span>
+              </h2>
+            </div>
+
+            <div class="space-y-4">
+              <% team.team_players.includes(:player, :brawler).each do |team_player| %>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <%= image_tag "https://cdn.brawlify.com/brawlers/borderless/#{team_player.brawler.brawl_stars_id}.png",
+                        class: "w-8 h-8 rounded-full",
+                        alt: team_player.brawler.name %>
+                    <div>
+                      <div class="font-medium text-gray-900">
+                        <% if team_player.player %>
+                          <%= link_to team_player.player.name, 
+                              player_path(team_player.player), 
+                              class: "hover:text-indigo-600" %>
+                        <% else %>
+                          <%= team_player.player_tag %>
+                        <% end %>
+                        <% if team_player.is_star_player %>
+                          <span class="text-yellow-500 ml-1" title="Star Player">★</span>
+                        <% end %>
+                      </div>
+                      <div class="text-sm text-gray-500">
+                        <%= team_player.brawler.name %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div> 

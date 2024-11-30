@@ -16,14 +16,16 @@ class BrawlStarsService
 
   def get_battle_log(player_tag)
     formatted_tag = player_tag.gsub('#', '').strip
-    Rails.logger.debug "Making request to Brawl Stars API for tag: #{formatted_tag}"
-    
-    full_url = "#{self.class.base_uri}/players/%23#{formatted_tag}/battlelog"
-    Rails.logger.debug "Full URL: #{full_url}"
+    Rails.logger.info "Fetching battle log for player #{formatted_tag}"
     
     response = self.class.get("/players/%23#{formatted_tag}/battlelog", @options)
+    Rails.logger.info "Battle log API response code: #{response.code}"
+    Rails.logger.info "Battle log API response body: #{response.body[0..1000]}"
     
-    handle_response(response)
+    parsed_response = handle_response(response)
+    Rails.logger.info "Parsed battle log items count: #{parsed_response['items']&.length || 0}"
+    
+    parsed_response
   end
 
   def get_brawlers
@@ -39,9 +41,7 @@ class BrawlStarsService
   end
 
   def get_top_players_by_country(country_code)
-    response = self.class.get("/rankings/#{country_code}/players", @options)
-    
-    handle_response(response)
+    self.class.get("/rankings/#{country_code}/players", @options)
   end
 
   def get_player(player_tag)
@@ -63,6 +63,6 @@ class BrawlStarsService
       raise "Server Error: #{response.code} - #{response.body}"
     end
 
-    response
+    response.parsed_response # Return the parsed JSON instead of raw response
   end
 end 

@@ -1,0 +1,30 @@
+<div class="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto">
+    <div class="bg-white shadow-lg rounded-lg p-6">
+      <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Recent Battles</h1>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="border-collapse table-auto w-full text-sm">
+          <thead>
+            <tr>
+              <th class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left">Time</th>
+              <th class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left">Mode</th>
+              <th class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left">Map</th>
+              <th class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left">Players</th>
+              <th class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left"></th>
+            </tr>
+          </thead>
+          <tbody class="bg-white">
+            <%= render partial: 'battle', collection: @battles %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mt-6">
+        <%== pagy_nav(@pagy) if @pagy %>
+      </div>
+    </div>
+  </div>
+</div> 

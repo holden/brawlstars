@@ -1,6 +1,11 @@
 require 'pagy'
 require 'pagy/extras/bootstrap'
 require 'pagy/extras/overflow'
+require 'pagy/extras/items'
 
-Pagy::DEFAULT[:items] = 25
-Pagy::DEFAULT[:overflow] = :last_page 
+# Configure Pagy defaults
+Pagy::DEFAULT.merge!(
+  items: 30,
+  max_items: 100,
+  overflow: :last_page
+)

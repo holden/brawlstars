@@ -4,8 +4,15 @@ class PlayersController < ApplicationController
   def index
     @players = Player.all
     
-    @players = @players.where(country_id: params[:country]) if params[:country].present?
-
+    if params[:search].present?
+      @players = @players.where("name ILIKE ?", "%#{params[:search]}%")
+    end
+    
+    if params[:country].present?
+      @players = @players.where(country_id: params[:country])
+    end
+    
+    # Handle sorting
     @players = case params[:sort]
               when 'country'
                 @players.order(country_id: sort_direction)
@@ -19,12 +26,11 @@ class PlayersController < ApplicationController
                 end
               else
                 # Default sorting: trophies desc with nulls last
-                @players.order(Arel.sql('CASE WHEN current_trophies IS NULL THEN 0 ELSE current_trophies END DESC'))
+                @players.by_trophies
               end
-
-    @countries = Player.distinct.pluck(:country_id).compact.map { |code| Country.find(code) }.sort_by(&:name)
     
-    @pagy, @players = pagy(@players)
+    @countries = Player.distinct.pluck(:country_id).compact.map { |code| Country.find(code) }.sort_by(&:name)
+    @pagy, @players = pagy(@players, items: 30)
   end
 
   def show
@@ -44,8 +50,12 @@ class PlayersController < ApplicationController
       format.turbo_stream do
         # Wait a moment for the job to complete
         sleep 2
-        # Reload the player to get fresh data
-        @player.reload
+        # Reload the player with all necessary associations
+        @player = Player.includes(
+          player_brawlers: :brawler,
+          team_players: { team: :battle }
+        ).find(@player.id)
+        
         render turbo_stream: turbo_stream.replace(
           "player_data", 
           partial: "players/player_data", 

@@ -27,6 +27,8 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :battles, only: [:index, :show]
+
   root "battle_logs#show"
 
   namespace :api do

@@ -4,7 +4,7 @@ class FetchTopPlayersJob < ApplicationJob
   retry_on StandardError, wait: :exponentially_longer, attempts: 3
 
   def perform(country_code)
-    Rails.logger.info "Starting fetch for country #{country_code}"
+    Rails.logger.info "=== Starting FetchTopPlayersJob for country #{country_code} ==="
     response = BrawlStarsService.new.get_top_players_by_country(country_code)
     
     return unless response.success?
@@ -20,31 +20,28 @@ class FetchTopPlayersJob < ApplicationJob
         player_data['country_id'] = country_code
         player_data['rank'] = index + 1
         
-        Rails.logger.info "Processing player #{index + 1}/#{total_players} for #{country_code}: #{player_data['name']}"
+        Rails.logger.info "[#{country_code}] Processing player #{index + 1}/#{total_players}: #{player_data['name']}"
         
         player = Player.find_by(tag: player_data['tag'])
         is_new_player = player.nil?
-        needs_details_update = is_new_player || player.updated_at < 24.hours.ago
         
         # Always update rank and trophies from rankings
         player = Player.create_or_update_from_api(player_data)
         
-        if needs_details_update
-          Rails.logger.info "#{is_new_player ? 'New player' : 'Stale data'} - fetching details for #{player.name}"
-          FetchPlayerDetailsJob.set(wait: rand(1..5).seconds).perform_later(player.tag)
-        else
-          Rails.logger.info "Skipping details update for #{player.name} - data is fresh"
-        end
+        # Always fetch battles, but use delay to avoid rate limits
+        Rails.logger.info "[#{country_code}] Queueing battle fetch for #{player.name}"
+        FetchPlayerDetailsJob.set(wait: rand(1..5).seconds).perform_later(player.tag)
+        
       rescue => e
-        Rails.logger.error "Error processing player #{player_data['name']} for #{country_code}: #{e.message}"
+        Rails.logger.error "[#{country_code}] Error processing player #{player_data['name']}: #{e.message}"
         Rails.logger.error e.backtrace.join("\n")
         next
       end
     end
-
-    Rails.logger.info "Completed fetch for country #{country_code}"
+    
+    Rails.logger.info "=== Completed FetchTopPlayersJob for country #{country_code} ==="
   rescue => e
-    Rails.logger.error "Error fetching top players for #{country_code}: #{e.message}"
+    Rails.logger.error "Error in FetchTopPlayersJob for #{country_code}: #{e.message}"
     Rails.logger.error e.backtrace.join("\n")
     raise e
   end

@@ -10,9 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2024_11_30_150446) do
+ActiveRecord::Schema[8.0].define(version: 2024_11_30_192226) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "battles", force: :cascade do |t|
+    t.string "battle_time", null: false
+    t.string "mode", null: false
+    t.string "map"
+    t.string "battle_type"
+    t.integer "duration"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["battle_time"], name: "index_battles_on_battle_time"
+    t.index ["mode"], name: "index_battles_on_mode"
+  end
 
   create_table "brawlers", force: :cascade do |t|
     t.string "name"
@@ -67,5 +79,34 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_30_150446) do
     t.index ["tag"], name: "index_players_on_tag", unique: true
   end
 
+  create_table "team_players", force: :cascade do |t|
+    t.bigint "team_id", null: false
+    t.bigint "player_id"
+    t.string "player_tag", null: false
+    t.bigint "brawler_id", null: false
+    t.boolean "is_star_player", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["brawler_id"], name: "index_team_players_on_brawler_id"
+    t.index ["player_id"], name: "index_team_players_on_player_id"
+    t.index ["player_tag"], name: "index_team_players_on_player_tag"
+    t.index ["team_id", "player_tag"], name: "index_team_players_on_team_id_and_player_tag"
+    t.index ["team_id"], name: "index_team_players_on_team_id"
+  end
+
+  create_table "teams", force: :cascade do |t|
+    t.bigint "battle_id", null: false
+    t.integer "rank"
+    t.string "result"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["battle_id", "rank"], name: "index_teams_on_battle_id_and_rank"
+    t.index ["battle_id"], name: "index_teams_on_battle_id"
+  end
+
   add_foreign_key "player_brawlers", "players"
+  add_foreign_key "team_players", "brawlers"
+  add_foreign_key "team_players", "players"
+  add_foreign_key "team_players", "teams"
+  add_foreign_key "teams", "battles"
 end

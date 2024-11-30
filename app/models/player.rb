@@ -5,36 +5,42 @@ class Player < ApplicationRecord
 
   scope :by_country, -> { order(:country_id) }
   scope :by_rank, -> { order(:current_rank) }
-  scope :by_trophies, -> { order(current_trophies: :desc) }
+  scope :by_trophies, -> { 
+    order(Arel.sql('CASE WHEN current_trophies IS NULL THEN 0 ELSE current_trophies END DESC'))
+  }
 
   has_many :player_brawlers, dependent: :destroy
   has_many :brawlers, through: :player_brawlers
 
+  has_many :team_players, foreign_key: :player_tag, primary_key: :tag
+  has_many :teams, through: :team_players
+  has_many :battles, through: :teams
+
   def self.create_or_update_from_api(data)
     player = find_or_initialize_by(tag: data['tag'])
     
-    # Always update rank and country
-    player.current_rank = data['rank']
-    player.country_id = data['country_id']
+    # Store existing values that we want to preserve
+    existing_country_id = player.country_id
+    existing_rank = player.current_rank
     
-    # Only update trophies if the value is valid (greater than 1)
-    if data['trophies'].to_i > 1
-      player.current_trophies = data['trophies']
-    elsif player.new_record?
-      # For new records, set to nil if invalid
-      player.current_trophies = nil
-    end
-    # For existing records with invalid trophies, keep the previous value
-    
-    # Only update other fields if they're provided
-    player.name = data['name'] if data['name'].present?
-    player.club_name = data.dig('club', 'name') if data.dig('club', 'name').present?
-    player.club_tag = data.dig('club', 'tag') if data.dig('club', 'tag').present?
-    
-    player.save!
-    
-    Rails.logger.info "Updated player #{player.name} (#{player.tag}): rank=#{player.current_rank}, trophies=#{player.current_trophies}"
-    
+    # Update with new data
+    player.update!(
+      name: data['name'],
+      current_trophies: data['trophies'],
+      highest_trophies: data['highestTrophies'],
+      exp_level: data['expLevel'],
+      exp_points: data['expPoints'],
+      is_qualified_from_championship: data['isQualifiedFromChampionshipChallenge'],
+      victories_3vs3: data['3vs3Victories'],
+      solo_victories: data['soloVictories'],
+      duo_victories: data['duoVictories'],
+      best_robo_rumble_time: data['bestRoboRumbleTime'],
+      best_time_as_big_brawler: data['bestTimeAsBigBrawler'],
+      # Only update these if they're provided in the data
+      country_id: data['country_id'] || existing_country_id,
+      current_rank: data['rank'] || existing_rank
+    )
+
     player
   end
 

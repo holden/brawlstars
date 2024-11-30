@@ -1,23 +1,35 @@
 <div class="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-full mx-auto">
+  <div class="max-w-7xl mx-auto">
     <div class="bg-white shadow-lg rounded-lg p-6">
-      <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Brawl Stars Players</h1>
-        <div class="flex gap-4">
-          <%= link_to "Battle Log", battle_log_path, class: "text-indigo-600 hover:text-indigo-800" %>
-          <%= link_to "Brawlers", brawlers_path, class: "text-indigo-600 hover:text-indigo-800" %>
-        </div>
-      </div>
-
-      <div class="mb-6 flex justify-between items-center">
-        <div class="flex items-center gap-4">
-          <%= form_tag players_path, method: :get, class: "flex items-center gap-2" do %>
-            <%= hidden_field_tag :sort, params[:sort] if params[:sort].present? %>
-            <%= select_tag :country,
-                options_for_select([['All Countries', '']] + @countries.map { |c| ["#{c.emoji_flag} #{c.name}", c.alpha2] },
-                                 params[:country]),
-                class: "rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                onchange: 'this.form.submit()' %>
+      <div class="flex flex-col sm:flex-row justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Players</h1>
+        
+        <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+          <%= form_with url: players_path, method: :get, class: "w-full sm:w-auto", data: { turbo_frame: "players", controller: "form" } do |f| %>
+            <div class="flex gap-4">
+              <%= f.select :country,
+                  options_for_select([['All Countries', '']] + @countries.map { |c| ["#{c.emoji_flag} #{c.name}", c.alpha2] },
+                                   params[:country]),
+                  {},
+                  class: "rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                  data: { action: "change->form#submit" } %>
+              
+              <div class="relative flex-grow">
+                <%= f.text_field :search, 
+                    value: params[:search],
+                    placeholder: "Search players...",
+                    class: "w-full sm:w-80 pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" %>
+                <% if params[:search].present? %>
+                  <%= link_to players_path(country: params[:country]), 
+                      class: "absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600",
+                      data: { turbo_frame: "players" } do %>
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
           <% end %>
 
           <% if params[:country].present? %>
@@ -30,66 +42,57 @@
         </div>
       </div>
 
-      <% if flash[:error] %>
-        <div class="mb-4 bg-red-50 border-l-4 border-red-400 p-4">
-          <div class="flex">
-            <div class="flex-shrink-0">
-              <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-              </svg>
-            </div>
-            <div class="ml-3">
-              <p class="text-sm text-red-700"><%= flash[:error] %></p>
-            </div>
-          </div>
+      <%= turbo_frame_tag "players" do %>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr>
+                <%= render 'sort_header', title: 'Country', field: 'country', current_sort: params[:sort], direction: params[:direction], country: params[:country] %>
+                <th class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left">Player</th>
+                <th class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left">Club</th>
+                <%= render 'sort_header', title: 'Rank', field: 'rank', current_sort: params[:sort], direction: params[:direction], country: params[:country] %>
+                <%= render 'sort_header', title: 'Trophies', field: 'trophies', current_sort: params[:sort], direction: params[:direction], country: params[:country] %>
+              </tr>
+            </thead>
+            <tbody class="bg-white">
+              <% @players.each do |player| %>
+                <tr>
+                  <td class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400">
+                    <% if player.country_flag %>
+                      <span class="text-lg" title="<%= player.country_name %>">
+                        <%= player.country_flag %>
+                      </span>
+                    <% end %>
+                  </td>
+                  <td class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400">
+                    <%= link_to player_path(player), 
+                        class: "text-indigo-600 hover:text-indigo-900",
+                        data: { turbo: false } do %>
+                      <div class="font-medium text-slate-900"><%= player.name %></div>
+                      <div class="text-slate-500"><%= player.tag %></div>
+                    <% end %>
+                  </td>
+                  <td class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400">
+                    <%= player.club_name %>
+                  </td>
+                  <td class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400">
+                    <%= player.current_rank %>
+                  </td>
+                  <td class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400">
+                    <%= number_with_delimiter(player.current_trophies) %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-6">
+          <% if @pagy.pages > 1 %>
+            <%== pagy_nav(@pagy, link_extra: 'data-turbo-frame="players"') %>
+          <% end %>
         </div>
       <% end %>
-
-      <div class="overflow-x-auto">
-        <table class="border-collapse table-auto w-full text-sm">
-          <thead>
-            <tr>
-              <%= render 'sort_header', title: 'Country', field: 'country', current_sort: params[:sort], direction: params[:direction], country: params[:country] %>
-              <th class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left">Player</th>
-              <th class="border-b dark:border-slate-600 font-medium p-4 pl-8 pt-0 pb-3 text-slate-400 dark:text-slate-200 text-left">Club</th>
-              <%= render 'sort_header', title: 'Rank', field: 'rank', current_sort: params[:sort], direction: params[:direction], country: params[:country] %>
-              <%= render 'sort_header', title: 'Trophies', field: 'trophies', current_sort: params[:sort], direction: params[:direction], country: params[:country] %>
-            </tr>
-          </thead>
-          <tbody class="bg-white">
-            <% @players.each do |player| %>
-              <tr>
-                <td class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400">
-                  <% if player.country_flag %>
-                    <span class="text-lg" title="<%= player.country_name %>">
-                      <%= player.country_flag %>
-                    </span>
-                  <% end %>
-                </td>
-                <td class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400">
-                  <%= link_to player_path(player), class: "text-indigo-600 hover:text-indigo-900" do %>
-                    <div class="font-medium text-slate-900"><%= player.name %></div>
-                    <div class="text-slate-500"><%= player.tag %></div>
-                  <% end %>
-                </td>
-                <td class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400">
-                  <%= player.club_name %>
-                </td>
-                <td class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400">
-                  <%= player.current_rank %>
-                </td>
-                <td class="border-b border-slate-100 dark:border-slate-700 p-4 pl-8 text-slate-500 dark:text-slate-400">
-                  <%= number_with_delimiter(player.current_trophies) %>
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="mt-6">
-        <%== pagy_nav(@pagy) if @pagy %>
-      </div>
     </div>
   </div>
 </div> 
