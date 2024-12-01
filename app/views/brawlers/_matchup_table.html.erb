@@ -1,0 +1,41 @@
+<div class="bg-gray-50 rounded-lg p-4">
+  <h2 class="text-xl font-semibold text-gray-900 mb-4">Matchup Analysis</h2>
+  
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead>
+        <tr>
+          <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Opponent</th>
+          <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Win Rate</th>
+          <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Wins</th>
+          <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Battles</th>
+          <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Power</th>
+          <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Trophies</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <% matchups.each do |matchup| %>
+          <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center">
+                <%= image_tag "https://cdn.brawlify.com/brawlers/borderless/#{matchup['opponent_brawl_stars_id']}.png",
+                    class: "w-8 h-8 mr-2",
+                    alt: matchup['opponent_brawler_name'] %>
+                <span class="font-medium"><%= matchup['opponent_brawler_name'] %></span>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="<%= matchup['win_rate'] >= 50 ? 'text-green-600' : 'text-red-600' %>">
+                <%= number_to_percentage(matchup['win_rate'], precision: 1) %>
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap"><%= matchup['wins'] %></td>
+            <td class="px-6 py-4 whitespace-nowrap"><%= matchup['total_battles'] %></td>
+            <td class="px-6 py-4 whitespace-nowrap"><%= matchup['avg_opponent_power'] %></td>
+            <td class="px-6 py-4 whitespace-nowrap"><%= matchup['avg_opponent_trophies'] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div> 

@@ -69,3 +69,5 @@ gem 'httparty'
 gem 'countries'
 gem 'pagy'
 gem 'ruby-limiter'
+
+gem "dockerfile-rails", ">= 1.6", :group => :development

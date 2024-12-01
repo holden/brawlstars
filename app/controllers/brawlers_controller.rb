@@ -6,6 +6,7 @@ class BrawlersController < ApplicationController
   def show
     @brawler = Brawler.find(params[:id])
     @brawler_details = @brawler.fetch_details
+    @matchups = BrawlerMatchupService.new(@brawler).analyze_matchups
   rescue => e
     flash[:error] = "Error fetching brawler details: #{e.message}"
     redirect_to brawlers_path
