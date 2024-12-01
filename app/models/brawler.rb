@@ -4,12 +4,14 @@ class Brawler < ApplicationRecord
 
   has_many :player_brawlers, foreign_key: :brawler_id, primary_key: :brawl_stars_id
   has_many :players, through: :player_brawlers
+  has_many :team_players
+  has_many :teams, through: :team_players
 
   def self.sync_from_api
     response = BrawlStarsService.new.get_brawlers
-    return unless response.success?
+    return unless response.is_a?(Array)
 
-    response.parsed_response['items'].each do |brawler_data|
+    response.each do |brawler_data|
       brawler = find_or_initialize_by(brawl_stars_id: brawler_data['id'])
       
       brawler.update!(
@@ -21,9 +23,6 @@ class Brawler < ApplicationRecord
   end
 
   def fetch_details
-    response = BrawlStarsService.new.get_brawler(brawl_stars_id)
-    return unless response.success?
-
-    response.parsed_response
+    BrawlStarsService.new.get_brawler(brawl_stars_id)
   end
 end 
