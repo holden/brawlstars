@@ -17,7 +17,7 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_30_192226) do
   create_table "battles", force: :cascade do |t|
     t.string "battle_time", null: false
     t.string "mode", null: false
-    t.string "map"
+    t.string "map", default: "Unknown", null: false
     t.string "battle_type"
     t.integer "duration"
     t.datetime "created_at", null: false
@@ -84,20 +84,22 @@ ActiveRecord::Schema[8.0].define(version: 2024_11_30_192226) do
     t.bigint "player_id"
     t.string "player_tag", null: false
     t.bigint "brawler_id", null: false
-    t.boolean "is_star_player", default: false
+    t.boolean "is_star_player", default: false, null: false
+    t.integer "power", default: 1, null: false
+    t.integer "trophies", default: 0, null: false
+    t.jsonb "gears", default: [], null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["brawler_id"], name: "index_team_players_on_brawler_id"
     t.index ["player_id"], name: "index_team_players_on_player_id"
     t.index ["player_tag"], name: "index_team_players_on_player_tag"
-    t.index ["team_id", "player_tag"], name: "index_team_players_on_team_id_and_player_tag"
     t.index ["team_id"], name: "index_team_players_on_team_id"
   end
 
   create_table "teams", force: :cascade do |t|
     t.bigint "battle_id", null: false
-    t.integer "rank"
-    t.string "result"
+    t.integer "rank", null: false
+    t.integer "result", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["battle_id", "rank"], name: "index_teams_on_battle_id_and_rank"

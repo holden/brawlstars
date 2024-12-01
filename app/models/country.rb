@@ -38,8 +38,11 @@ class Country
       Rails.logger.info "Starting fetch_all_top_players for #{countries.length} countries"
       
       countries.each_with_index do |country, index|
-        Rails.logger.info "Queueing job #{index + 1}/#{countries.length} for #{country.name} (#{country.alpha2})"
-        FetchTopPlayersJob.set(wait: index * 5.seconds).perform_later(country.alpha2)
+        scheduled_time = Time.current + (index * 5).seconds
+        
+        Rails.logger.info "Scheduling job #{index + 1}/#{countries.length} for #{country.name} (#{country.alpha2}) at #{scheduled_time}"
+        
+        FetchTopPlayersJob.set(wait_until: scheduled_time).perform_later(country.alpha2)
       end
     end
   end
@@ -50,6 +53,6 @@ class Country
 
   def fetch_top_players
     Rails.logger.info "Starting fetch_top_players for single country: #{name} (#{alpha2})"
-    FetchTopPlayersJob.perform_later(alpha2)
+    FetchTopPlayersJob.perform_now(alpha2)
   end
 end 

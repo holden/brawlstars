@@ -1,9 +1,9 @@
-class CreateBattles < ActiveRecord::Migration[8.0]
+class CreateBattles < ActiveRecord::Migration[7.0]
   def change
     create_table :battles do |t|
       t.string :battle_time, null: false
       t.string :mode, null: false
-      t.string :map
+      t.string :map, null: false, default: 'Unknown'
       t.string :battle_type
       t.integer :duration
 
