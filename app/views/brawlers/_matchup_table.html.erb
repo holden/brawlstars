@@ -17,12 +17,13 @@
         <% matchups.each do |matchup| %>
           <tr class="hover:bg-gray-50">
             <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex items-center">
+              <%= link_to brawler_path(matchup['opponent_brawler_id']), 
+                  class: "flex items-center hover:text-indigo-600 transition-colors" do %>
                 <%= image_tag "https://cdn.brawlify.com/brawlers/borderless/#{matchup['opponent_brawl_stars_id']}.png",
                     class: "w-8 h-8 mr-2",
                     alt: matchup['opponent_brawler_name'] %>
                 <span class="font-medium"><%= matchup['opponent_brawler_name'] %></span>
-              </div>
+              <% end %>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <span class="<%= matchup['win_rate'] >= 50 ? 'text-green-600' : 'text-red-600' %>">

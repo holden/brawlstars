@@ -1,13 +1,31 @@
 class BrawlerMatchupService
+  CACHE_EXPIRY = 1.hour
+
   def initialize(brawler)
     @brawler = brawler
   end
 
   def analyze_matchups
-    ActiveRecord::Base.connection.execute(matchup_analysis_query).to_a
+    Rails.cache.fetch(cache_key, expires_in: CACHE_EXPIRY) do
+      ActiveRecord::Base.connection.execute(matchup_analysis_query).to_a
+    end
   end
 
   private
+
+  def cache_key
+    "brawler_matchups/#{@brawler.id}/#{cache_version}"
+  end
+
+  def cache_version
+    # Include the latest battle time in the cache key to ensure it updates when new battles are added
+    latest_battle = Battle.joins(teams: :team_players)
+                        .where(team_players: { brawler_id: @brawler.id })
+                        .order(battle_time: :desc)
+                        .pick(:battle_time)
+    
+    latest_battle&.to_i || 0
+  end
 
   def matchup_analysis_query
     <<-SQL
