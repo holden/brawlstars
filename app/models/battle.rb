@@ -22,15 +22,20 @@ class Battle < ApplicationRecord
         mode: mode
       )
       
-      battle = new(
+      Rails.logger.info "Created/Found Event: #{event.inspect}"
+      
+      battle = Battle.new(
         battle_time: data['battleTime'],
-        event: event,
         battle_type: data['battle']['type'],
         duration: data['battle']['duration']
       )
-
+      
+      # Set the event association explicitly
+      battle.event = event
       battle.save!
       
+      Rails.logger.info "Created Battle: #{battle.inspect}"
+
       if data['battle']['teams'].present?
         Rails.logger.info "Processing teams battle with #{data['battle']['teams'].length} teams"
         
@@ -82,11 +87,12 @@ class Battle < ApplicationRecord
       end
 
       battle
+    rescue => e
+      Rails.logger.error "Failed to create battle: #{e.message}"
+      Rails.logger.error "Event data: #{event.inspect}" if defined?(event)
+      Rails.logger.error "Battle data: #{data.inspect}"
+      raise e
     end
-  rescue => e
-    Rails.logger.error "Error creating battle from API data: #{e.message}"
-    Rails.logger.error "Battle data: #{data.inspect}"
-    raise e
   end
 
   private
