@@ -10,20 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2024_12_02_091800) do
+ActiveRecord::Schema[8.0].define(version: 2024_12_02_100349) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "battles", force: :cascade do |t|
     t.string "battle_time", null: false
-    t.string "mode", null: false
-    t.string "map", default: "Unknown", null: false
     t.string "battle_type"
     t.integer "duration"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "event_id", null: false
     t.index ["battle_time"], name: "index_battles_on_battle_time"
-    t.index ["mode"], name: "index_battles_on_mode"
+    t.index ["event_id"], name: "index_battles_on_event_id"
   end
 
   create_table "brawlers", force: :cascade do |t|
@@ -34,6 +33,31 @@ ActiveRecord::Schema[8.0].define(version: 2024_12_02_091800) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["brawl_stars_id"], name: "index_brawlers_on_brawl_stars_id", unique: true
+  end
+
+  create_table "events", force: :cascade do |t|
+    t.integer "brawl_stars_id", null: false
+    t.bigint "map_id", null: false
+    t.bigint "mode_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["brawl_stars_id"], name: "index_events_on_brawl_stars_id", unique: true
+    t.index ["map_id"], name: "index_events_on_map_id"
+    t.index ["mode_id"], name: "index_events_on_mode_id"
+  end
+
+  create_table "maps", force: :cascade do |t|
+    t.string "name", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_maps_on_name", unique: true
+  end
+
+  create_table "modes", force: :cascade do |t|
+    t.string "name", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_modes_on_name", unique: true
   end
 
   create_table "player_brawlers", force: :cascade do |t|
@@ -108,6 +132,9 @@ ActiveRecord::Schema[8.0].define(version: 2024_12_02_091800) do
     t.index ["battle_id"], name: "index_teams_on_battle_id"
   end
 
+  add_foreign_key "battles", "events"
+  add_foreign_key "events", "maps"
+  add_foreign_key "events", "modes"
   add_foreign_key "player_brawlers", "players"
   add_foreign_key "team_players", "brawlers"
   add_foreign_key "team_players", "players"

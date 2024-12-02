@@ -1,27 +1,30 @@
 class Battle < ApplicationRecord
+  belongs_to :event
   has_many :teams, dependent: :destroy
   has_many :team_players, through: :teams
 
-  validates :battle_time, :mode, presence: true
+  validates :battle_time, presence: true
   
-  scope :by_mode, ->(mode) { where(mode: mode) }
-  scope :recent, -> { order(battle_time: :desc) }
+  delegate :mode, :map, to: :event
   
   def self.create_from_api(data)
-    Rails.logger.info "Creating battle from API data"
-    
     Battle.transaction do
-      # Handle unknown/siege mode
-      mode = data['battle']['mode']
-      mode = 'siege' if mode == 'unknown' && data.dig('event', 'map')&.include?('Siege')
+      # Find or create mode
+      mode = Mode.find_or_create_by!(name: data['battle']['mode'])
       
-      # Handle missing map value
-      map = data.dig('event', 'map').presence || 'Unknown'
+      # Find or create map
+      map = Map.find_or_create_by!(name: data.dig('event', 'map') || 'Unknown')
+      
+      # Find or create event
+      event = Event.find_or_create_by!(
+        brawl_stars_id: data.dig('event', 'id'),
+        map: map,
+        mode: mode
+      )
       
       battle = new(
         battle_time: data['battleTime'],
-        mode: mode,
-        map: map,
+        event: event,
         battle_type: data['battle']['type'],
         duration: data['battle']['duration']
       )
@@ -32,7 +35,7 @@ class Battle < ApplicationRecord
         Rails.logger.info "Processing teams battle with #{data['battle']['teams'].length} teams"
         
         # Handle different battle types
-        if mode == 'duoShowdown'
+        if mode.name == 'duoShowdown'
           battle_rank = data['battle']['rank'] # Get the actual rank from battle data
           
           data['battle']['teams'].each_with_index do |team_players, team_index|
